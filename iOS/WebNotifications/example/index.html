@@ -1,12 +1,32 @@
+<!DOCTYPE html>
 <html>
   <head>
+    <meta name="viewport" content="width=device-width,height=device-height,user-scalable=no,initial-scale=1.0" />
+    <meta http-equiv="Content-type" content="text/html; charset=utf-8">
+  </head>
+  <body>
+    <script type="text/javascript" src="cordova.js"></script>
+    <script type="text/javascript" src="webnotifications.js"></script>
     <script type="text/javascript">
-function notify(text) {
-  new Notification(text); // { onclick: onshow: onerror: onclose: function() {} }
+
+function notify(titletext, bodytext) {
+  new Notification(titletext, {
+    body: bodytext,
+    tag: "test",
+    onclick: function(tag) { alert(tag); },
+    // onshow: ,
+    // onerror: ,
+    // onclose: ,
+  });
 }
-</script>
-</head>
-<body>
-  <input type=button onclick="notify('hi');" value="new Notification()"/>
+
+window.onload = function() {
+  document.addEventListener('deviceready', function () {
+  });
+}
+  </script>
+
+  <input type=button onclick="notify('Greeting', 'Hello World');" value="new Notification()"/>
+
 </body>
 </html>
