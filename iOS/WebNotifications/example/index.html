@@ -1,0 +1,12 @@
+<html>
+  <head>
+    <script type="text/javascript">
+function notify(text) {
+  new Notification(text); // { onclick: onshow: onerror: onclose: function() {} }
+}
+</script>
+</head>
+<body>
+  <input type=button onclick="notify('hi');" value="new Notification()"/>
+</body>
+</html>
