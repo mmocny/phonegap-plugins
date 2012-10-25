@@ -33,6 +33,7 @@ if (typeof window.Notification == 'undefined') {
         this.title = title || 'defaultTitle';
         this.body = options.body || '';
         this.tag = options.tag || 'defaultTag';
+        this.delay = options.delay || 0;
         // titleDir, bodyDir, iconUrl are not supported, perhaps we should issue console warnings
 
         if (window.Notification.active[this.tag])
@@ -53,7 +54,7 @@ if (typeof window.Notification == 'undefined') {
             if (this.onerror) {
                 this.onerror(error);
             }
-        }, 'WebNotifications', 'addNotification', [{tag:this.tag, title:this.title, body:this.body}]);
+        }, 'WebNotifications', 'addNotification', [{tag:this.tag, title:this.title, body:this.body, delay:this.delay}]);
     };
 
     window.Notification.permission = 'granted';
@@ -63,13 +64,13 @@ if (typeof window.Notification == 'undefined') {
     };
 
     // Not part of the W3C API. Used by the native side to call onclick handlers.
-    window.Notification.callOnclickByTag = function(tag, wasForeground) {
+    window.Notification.callOnclickByTag = function(tag) {
         console.log('callOnclickByTag');
         var notification = window.Notification.active[tag];
         if (notification && notification.onclick && typeof notification.onclick == 'function') {
-            notification.onclick();
+            notification.onclick(tag);
+            delete window.Notification.active[tag];
         }
-        delete window.Notification.active[tag];
     };
 
     // A global map of notifications by tag, so their onclick callbacks can be called.
@@ -87,6 +88,6 @@ if (typeof window.Notification == 'undefined') {
             if (this.onerror) {
                 this.onerror(error);
             }
-        }, 'StatusBarNotification', 'clear', [this.tag]);
+        }, 'WebNotifications', 'clear', [this.tag]);
     };
 }
