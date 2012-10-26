@@ -31,11 +31,19 @@ if (typeof window.Notification == 'undefined') {
         options = options || {};
 
         this.title = title || 'defaultTitle';
+
+        // w3c options:
         this.body = options.body || '';
         this.tag = options.tag || 'defaultTag';
-        this.delay = options.delay || 0;
-        // titleDir, bodyDir, iconUrl are not supported, perhaps we should issue console warnings
+        this.iconUrl = options.iconUrl || '';
+        // titleDir, bodyDir are not supported
 
+        // cordova option extensions:
+        this.delay = options.delay || 0;
+        this.soundUrl = options.soundUrl || '';
+        this.badgeNumber = options.badgeNumber || 0;
+
+        // there must be one unique notification per tag, so close any existing outstanting notifications
         if (window.Notification.active[this.tag])
             window.Notification.active[this.tag].close();
         window.Notification.active[this.tag] = this;
@@ -43,29 +51,37 @@ if (typeof window.Notification == 'undefined') {
         // Spec claims these must be defined
         this.onclick = options.onclick;
         this.onerror = options.onerror;
-        this.onshow = options.onshow;
         this.onclose = options.onclose;
+        //this.onshow = options.onshow; // not supported
 
+        var that = this;
         cordova.exec(function() {
-            if (this.onshow) {
-                this.onshow();
-            }
+            // Do not call onshow, since most notifications will be delayed showings anyway
+            //if (that.onshow) {
+            //    that.onshow();
+            //}
         }, function(error) {
-            if (this.onerror) {
-                this.onerror(error);
+            if (that.onerror) {
+                that.onerror(error);
             }
-        }, 'WebNotifications', 'addNotification', [{tag:this.tag, title:this.title, body:this.body, delay:this.delay}]);
+        }, 'WebNotifications', 'addNotification', [{
+            tag: this.tag,
+            title: this.title,
+            body: this.body,
+            delay: this.delay,
+        }]);
     };
 
     window.Notification.permission = 'granted';
 
     window.Notification.requestPermission = function(callback) {
-        callback(window.Notification.permission);
+        setTimeout(function() {
+            callback(window.Notification.permission);
+        }, 0);
     };
 
     // Not part of the W3C API. Used by the native side to call onclick handlers.
     window.Notification.callOnclickByTag = function(tag) {
-        console.log('callOnclickByTag');
         var notification = window.Notification.active[tag];
         if (notification && notification.onclick && typeof notification.onclick == 'function') {
             notification.onclick(tag);
@@ -80,14 +96,18 @@ if (typeof window.Notification == 'undefined') {
      * Cancels a notification that has already been created and shown to the user.
      */
     window.Notification.prototype.close = function() {
+        var that = this;
         cordova.exec(function() {
-            if (this.onclose) {
-                this.onclose();
+            if (that.onclose) {
+                console.log("inside");
+                that.onclose();
             }
         }, function(error) {
-            if (this.onerror) {
-                this.onerror(error);
+            if (that.onerror) {
+                that.onerror(error);
             }
-        }, 'WebNotifications', 'clear', [this.tag]);
+        }, 'WebNotifications', 'cancelNotification', [{
+            tag: this.tag,
+        }]);
     };
 }

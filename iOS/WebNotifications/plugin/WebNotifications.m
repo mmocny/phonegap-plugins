@@ -22,53 +22,49 @@
 @implementation WebNotifications
 
 - (void)addNotification:(NSMutableArray*)arguments withDict:(NSMutableDictionary*)options {
-
-  /* w3c Spec: http://www.w3.org/TR/notifications/
-   * DOMString title;
-   * NotificationDirection titleDir;
-   * DOMString body;
-   * NotificationDirection bodyDir;
-   * DOMString tag;
-   * DOMString iconUrl;
-   */
-
+    // w3c options:
 	NSString *title = [options objectForKey:@"title"];
 	NSString *body = [options objectForKey:@"body"];
 	NSString *tag = [options objectForKey:@"tag"];
-	//NSString *iconUrl = [options objectForKey:@"iconUrl"];
+    //NSString *iconUrl = [options objectForKey:@"iconUrl"]; // Not supported
+    
+    // cordova option extensions:
+    NSUnsignedInteger delay = [[options objectForKey:@"delay"] unsignedIntegerValue];
+    NSString *soundUrl = [options objectForKey:@"soundUrl"];
+    NSInteger badgeNumber = [[options objectForKey:@"badgeNumber"] intValue];
 
-	//NSString *action = [options objectForKey:@"action"];
-	//NSInteger badge = [[options objectForKey:@"badge"] intValue];
-	//bool hasAction = ([[options objectForKey:@"hasAction"] intValue] == 1) ? YES : NO;
+    //NSString *action = [options objectForKey:@"action"];
+    //bool hasAction = ([[options objectForKey:@"hasAction"] intValue] == 1) ? YES : NO;
+    //alertAction
 
 	UILocalNotification *notif = [[UILocalNotification alloc] init];
-	notif.fireDate = [[NSDate date] addTimeInterval:5];
-	//notif.hasAction = hasAction;
-	//notif.timeZone = [NSTimeZone defaultTimeZone];
-  //notif.repeatInterval = [[repeatDict objectForKey: repeat] intValue];
-	notif.alertBody = [NSString stringWithFormat:@"[ %@ ] %@", title, body];
-	//notif.alertAction = action;
-  //notif.soundName = sound;
-  //notif.applicationIconBadgeNumber = badge;
+	notif.alertBody = [NSString stringWithFormat:@"[%@] %@: %@", tag, title, body];
+    notif.timeZone = [NSTimeZone defaultTimeZone];
+
+    notif.soundName = soundName;
+    notif.applicationIconBadgeNumber = badge;
 	
-	NSDictionary *userDict = [NSDictionary dictionaryWithObjectsAndKeys:tag,@"tag",nil];
-  notif.userInfo = userDict;
+	NSDictionary *userDict = [NSDictionary dictionaryWithObjectsAndKeys:title,@"title",body,@"body",tag,@"tag",nil];
+    notif.userInfo = userDict;
 	
-	[[UIApplication sharedApplication] scheduleLocalNotification:notif]; // presentLocalNotificationNow:
-	//[notif release];
+    if (delay != 0) {
+        notif.fireDate = [[NSDate date] addTimeInterval:delay];
+        //notif.repeatInterval = [[repeatDict objectForKey: repeat] intValue];
+        
+        [[UIApplication sharedApplication] scheduleLocalNotification:notif];
+    } else {
+        [[UIApplication sharedApplication] presentLocalNotificationNow:notif];
+    }
 }
 
 - (void)cancelNotification:(NSMutableArray*)arguments withDict:(NSMutableDictionary*)options {
-  /*
-	NSString *notificationId = [arguments objectAtIndex:0];
-	NSArray *notifications = [[UIApplication sharedApplication] scheduledLocalNotifications];
-	for (UILocalNotification *notification in notifications) {
-		NSString *notId = [notification.userInfo objectForKey:@"notificationId"];
-		if ([notificationId isEqualToString:notId]) {
-			[[UIApplication sharedApplication] cancelLocalNotification:notification];
-		}
-	}
-	*/
+    NSString *tag = [options objectForKey:@"tag"];
+    NSArray *notifications = [[UIApplication sharedApplication] scheduledLocalNotifications];
+    for (UILocalNotification *notification in notifications) {
+        if ([[notification.userInfo objectForKey:@"tag"] isEqualToString:tag]) {
+            [[UIApplication sharedApplication] cancelLocalNotification:notification];
+        }
+    }
 }
 
 - (void)cancelAllNotifications:(NSMutableArray*)arguments withDict:(NSMutableDictionary*)options {
