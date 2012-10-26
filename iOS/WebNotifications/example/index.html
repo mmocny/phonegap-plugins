@@ -1,47 +1,71 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta name="viewport" content="width=device-width,height=device-height,user-scalable=no,initial-scale=1.0" />
-    <meta http-equiv="Content-type" content="text/html; charset=utf-8">
-  </head>
-  <body>
-    <script type="text/javascript" src="cordova.ios.js"></script>
-    <script type="text/javascript" src="webnotifications.js"></script>
-    <script type="text/javascript">
+    <head>
+        <meta name="viewport" content="width=device-width,height=device-height,user-scalable=no,initial-scale=1.0" />
+        <meta http-equiv="Content-type" content="text/html; charset=utf-8">
+    </head>
+    <body>
+        <script type="text/javascript" src="cordova.ios.js"></script>
+        <script type="text/javascript" src="webnotifications.js"></script>
+        <script type="text/javascript">
+
+var buffer = [];
 
 function log(msg) {
-  var d = new Date();
-  var s = (d.getHours() * 60 + d.getMinutes()) * 60 + d.getSeconds();
-  document.querySelector("input").insertAdjacentHTML("afterend", "<div>" + s + " - " + msg + "</div>");
+    var d = new Date();
+    var s = (d.getHours() * 60 + d.getMinutes()) * 60 + d.getSeconds();
+    buffer.push("<div>[" + s + "] " + msg + "</div>");
+    setTimeout(flushlog, 0);
 }
 
+function flushlog() {
+    buffer.forEach(function(e,i) {
+        document.querySelectorAll("input")[1].insertAdjacentHTML("afterend", e);
+    });
+    buffer.length = 0;
+}
+
+var notification = null;
+
 function notify(title, body, tag, delay) {
-  new Notification(title, {
-    body: body,
-    tag: tag,
-    delay: delay,
-    onclick: function(tag) { log("onclick: " + tag); },
-    onclose: function(tag) { log("onclose: " + tag); },
-    onerror: function(tag) { log("onerror: " + tag); },
-    onshow: function(tag) { log("onshow: " + tag); },
-  });
+    log("Scheduling Notification: " + tag);
+    notification = new Notification(title, {
+        body: body,
+        tag: tag,
+        delay: delay,
+        onclick: function() { log("onclick: " + tag); notification = null; },
+        onclose: function() { log("onclose: " + tag); notification = null; },
+        onerror: function() { log("onerror: " + tag); notification = null; },
+    });
+}
+
+function cancelNotify() {
+    log("try cancel notification: " + notification);
+    notification.close();
 }
 
 window.onload = function() {
-  document.addEventListener('deviceready', function () {
-  });
+    document.addEventListener('deviceready', function () {
+    });
 
-  document.addEventListener('resign', function () {
-      notify('Resign', 'Cruel World', '#resign', 5);
-  });
+    document.addEventListener('resign', function () {
+        notify('Resign', 'Cruel World', '#resign', 5);
+    });
 
-  document.addEventListener('pause', function () {
-      notify('Pause', 'Cruel World', '#pause', 5);
-  });
+    document.addEventListener('pause', function () {
+        //notify('Pause', 'Cruel World', '#pause', 5);
+    });
+
+    document.addEventListener('resume', function () {
+        notify('Resume', 'Good World', '#resume', 0);
+    });
 }
-  </script>
 
-  <input type=button onclick="notify('Hello', 'World', '#button', 0);" value="new Notification()"/>
+    </script>
+
+    <input type=button onclick="notify('Hello', 'World', '#button', 5);" value="new Notification()"/>
+    <input type=button onclick="cancelNotify();" value="cancelNotify()"/>
+    <input type=button onclick="flushlog();" value="flushlog()"/>
 
 </body>
 </html>
