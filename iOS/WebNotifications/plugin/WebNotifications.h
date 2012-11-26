@@ -23,8 +23,13 @@
 @interface WebNotifications : CDVPlugin {
 }
 
-- (void)addNotification:(NSMutableArray*)arguments withDict:(NSMutableDictionary*)options;
-- (void)cancelNotification:(NSMutableArray*)arguments withDict:(NSMutableDictionary*)options;
-- (void)cancelAllNotifications:(NSMutableArray*)arguments withDict:(NSMutableDictionary*)options;
+@property (nonatomic, strong) NSMutableArray* activeNotifications;
+
+- (CDVPlugin*)initWithWebView:(UIWebView*)theWebView;
+
+- (void)createNotification:(NSMutableArray*)arguments withDict:(NSMutableDictionary*)options;
+- (void)closeNotification:(NSMutableArray*)arguments withDict:(NSMutableDictionary*)options;
+
+- (void)clickNofification:(NSString*)tag;
 
 @end

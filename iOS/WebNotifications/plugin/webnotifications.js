@@ -52,19 +52,17 @@ if (typeof window.Notification == 'undefined') {
         this.onclick = options.onclick;
         this.onerror = options.onerror;
         this.onclose = options.onclose;
-        //this.onshow = options.onshow; // not supported
+        this.onshow = options.onshow;
+        if (this.onshow) {
+            console.log("Warning, WebNotifications plugin will never call onshow"); // this may change on other platforms
+        }
 
-        var that = this;
-        cordova.exec(function() {
-            // Do not call onshow, since most notifications will be delayed showings anyway
-            //if (that.onshow) {
-            //    that.onshow();
-            //}
-        }, function(error) {
-            if (that.onerror) {
-                that.onerror(error);
+        var self = this;
+        cordova.exec(null, function(error) {
+            if (self.onerror) {
+                self.onerror(error);
             }
-        }, 'WebNotifications', 'addNotification', [{
+        }, 'WebNotifications', 'createNotification', [{
             tag: this.tag,
             title: this.title,
             body: this.body,
@@ -72,6 +70,7 @@ if (typeof window.Notification == 'undefined') {
         }]);
     };
 
+    // TODO: change name to something internal looking?
     window.Notification.permission = 'granted';
 
     window.Notification.requestPermission = function(callback) {
@@ -81,32 +80,43 @@ if (typeof window.Notification == 'undefined') {
     };
 
     // Not part of the W3C API. Used by the native side to call onclick handlers.
+    // TODO: change name to something internal looking?
     window.Notification.callOnclickByTag = function(tag) {
         var notification = window.Notification.active[tag];
         if (notification && notification.onclick && typeof notification.onclick == 'function') {
             notification.onclick(tag);
-            delete window.Notification.active[tag];
         }
+        delete window.Notification.active[tag];
+    };
+
+    window.Notification.callOncloseByTag = function(tag) {
+        var notification = window.Notification.active[tag];
+        if (notification && notification.onclose && typeof notification.onclose == 'function') {
+            notification.onclose(tag);
+        }
+        delete window.Notification.active[tag];
     };
 
     // A global map of notifications by tag, so their onclick callbacks can be called.
+    // TODO: change name to something internal looking?
     window.Notification.active = {};
 
     /**
-     * Cancels a notification that has already been created and shown to the user.
+     * Dismiss a notification.
      */
     window.Notification.prototype.close = function() {
-        var that = this;
+        var self = this;
         cordova.exec(function() {
-            if (that.onclose) {
-                console.log("inside");
-                that.onclose();
+            if (self.onclose) {
+                self.onclose();
             }
+            delete window.Notification[self.tag];
         }, function(error) {
-            if (that.onerror) {
-                that.onerror(error);
+            if (self.onerror) {
+                self.onerror(error);
             }
-        }, 'WebNotifications', 'cancelNotification', [{
+            delete window.Notification[self.tag];
+        }, 'WebNotifications', 'closeNotification', [{
             tag: this.tag,
         }]);
     };
