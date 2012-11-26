@@ -20,10 +20,22 @@
 #define Log(fmt, ...) NSLog((@"%d: %s " fmt), __LINE__, __PRETTY_FUNCTION__, ##__VA_ARGS__);
 
 #import "WebNotifications.h"
+#import "MainViewController.h"
 
 @implementation WebNotifications
 
-- (void)addNotification:(CDVInvokedUrlCommand*)command
+@synthesize activeNotifications;
+
+- (CDVPlugin*)initWithWebView:(UIWebView*)theWebView
+{
+    self = [super init];
+    if (self) {
+        self.activeNotifications = [NSMutableArray array];
+    }
+    return self;
+}
+
+- (void)createNotification:(CDVInvokedUrlCommand*)command
 {
     NSDictionary* options = [command.arguments objectAtIndex:0];
 
@@ -55,41 +67,58 @@
     notif.userInfo = userDict;
 	
     if (delay != 0) {
-        Log(@"scheduleLocalNotification");
         notif.fireDate = [[NSDate date] addTimeInterval:delay];
         //notif.repeatInterval = [[repeatDict objectForKey: repeat] intValue];
         
         [[UIApplication sharedApplication] scheduleLocalNotification:notif];
     } else {
-        Log(@"presentLocalNotificationNow");
         [[UIApplication sharedApplication] presentLocalNotificationNow:notif];
     }
+    
+    [self.activeNotifications addObject:notif];
 }
 
-- (void)cancelNotification:(CDVInvokedUrlCommand*)command
+- (void)closeNotification:(CDVInvokedUrlCommand*)command
 {
 //    command.callbackId;
     NSDictionary* options = [command.arguments objectAtIndex:0];
-
     NSString *tag = [options objectForKey:@"tag"];
-    
-    Log(@"attempting cancelNotification tag: %@", tag);
 
     NSArray *notifications = [[UIApplication sharedApplication] scheduledLocalNotifications];
     for (UILocalNotification *notification in notifications) {
         if ([[notification.userInfo objectForKey:@"tag"] isEqualToString:tag]) {
-            Log(@"Found it, cancelling tag: %@", tag);
+            Log(@"Cancelling notification with tag: %@", tag);
             [[UIApplication sharedApplication] cancelLocalNotification:notification];
+            [self.activeNotifications removeObject:notification];
             [self.commandDelegate sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsInt:0] callbackId:command.callbackId];
         }
     }
     [self.commandDelegate sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsInt:0] callbackId:command.callbackId];
 }
 
+- (void)clickNofification:(NSString*)tag {
+    NSString *jsCallBack;
+    
+    jsCallBack = [NSString stringWithFormat:@"window.Notification.callOnclickByTag('%@')", tag];
+    [((CDVViewController*)self.viewController).webView stringByEvaluatingJavaScriptFromString:jsCallBack];
+    
+    NSArray *scheduledNotifications = [[UIApplication sharedApplication] scheduledLocalNotifications];
+    NSMutableArray *toDiscard = [NSMutableArray array];
+    for (UILocalNotification *notification in self.activeNotifications) {
+        if (![scheduledNotifications containsObject:notification]) {
+            // This notification is active, but no longer scheduled, so it must be displayed
+            jsCallBack = [NSString stringWithFormat:@"window.Notification.callOncloseByTag('%@')", [notification.userInfo objectForKey:@"tag"]];
+            [((CDVViewController*)self.viewController).webView stringByEvaluatingJavaScriptFromString:jsCallBack];
+            [toDiscard addObject:notification];
+        }
+    }
+    [self.activeNotifications removeObjectsInArray:toDiscard];
+}
+
+/*
 - (void)cancelAllNotifications:(NSMutableArray*)arguments withDict:(NSMutableDictionary*)options {
 	[[UIApplication sharedApplication] cancelAllLocalNotifications];
 }
-
-
+*/
 
 @end
