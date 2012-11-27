@@ -14,13 +14,16 @@ var buffer = [];
 function log(msg) {
     var d = new Date();
     var s = (d.getHours() * 60 + d.getMinutes()) * 60 + d.getSeconds();
-    buffer.push("<div>[" + s + "] " + msg + "</div>");
+    var msg = "[" + s + "] " + msg;
+    buffer.push(msg);
+    console.log(msg);
     setTimeout(flushlog, 0);
 }
 
 function flushlog() {
     buffer.forEach(function(e,i) {
-        document.querySelectorAll("input")[1].insertAdjacentHTML("afterend", e);
+        var html = "<div>" + e + "</div>";
+        document.querySelectorAll("input")[1].insertAdjacentHTML("afterend", html);
     });
     buffer.length = 0;
 }
@@ -44,26 +47,28 @@ function cancelNotify() {
     notification.close();
 }
 
-window.onload = function() {
-    document.addEventListener('deviceready', function () {
-    });
+document.addEventListener('deviceready', function () {
+});
 
-    document.addEventListener('resign', function () {
-        notify('Resign', 'Cruel World', '#resign', 5);
-    });
+document.addEventListener('resign', function () {
+    notify('Resign', 'Cruel World', '#resign', 5);
+});
 
-    document.addEventListener('pause', function () {
-        //notify('Pause', 'Cruel World', '#pause', 5);
-    });
+document.addEventListener('pause', function () {
+    notify('Pause', 'Cruel World', '#pause', 5);
+});
 
-    document.addEventListener('resume', function () {
-        notify('Resume', 'Good World', '#resume', 0);
-    });
+document.addEventListener('resume', function () {
+    //notify('Resume', 'Good World', '#resume', 0);
+});
+
+function notifyButtonClick() {
+    notify('Hello', 'World', '#button', 0);
 }
 
     </script>
 
-    <input type=button onclick="notify('Hello', 'World', '#button', 5);" value="new Notification()"/>
+    <input type=button onclick="notifyButtonClick();" value="new Notification()"/>
     <input type=button onclick="cancelNotify();" value="cancelNotify()"/>
     <input type=button onclick="flushlog();" value="flushlog()"/>
 
