@@ -19,4 +19,4 @@ Using this plugin requires [Android Cordova](www.cordova.io)
 
 ## Using the plugin
 
-See example in example/ folder.  Uses the w3c spec with some minor alterations.
+See example in example/ folder.
